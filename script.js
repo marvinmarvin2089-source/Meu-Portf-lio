@@ -1424,15 +1424,19 @@ if (
 const skillsSection =
     document.querySelector(".skills-section");
 
+const mobileLearningPath = window.matchMedia("(max-width: 800px)").matches;
+
+const learningSvg = document.querySelector(
+    mobileLearningPath
+        ? ".learning-path-mobile"
+        : ".learning-path-desktop"
+);
+
 const learningProgress =
-    document.querySelector(
-        ".learning-path-progress"
-    );
+    learningSvg?.querySelector(".learning-path-progress");
 
 const learningPoints =
-    document.querySelectorAll(
-        ".learning-point"
-    );
+    learningSvg?.querySelectorAll(".learning-point") || [];
 
 const skillCards =
     document.querySelectorAll(".skill");
@@ -1495,7 +1499,9 @@ const skillCards =
    percorrida na ordem inversa.
 */
 
-const learningSkillOrder = [
+const learningSkillOrder = mobileLearningPath
+    ? Array.from({ length: 12 }, (_, index) => index)
+    : [
     0,  // HTML
     1,  // CSS
     2,  // JavaScript
@@ -1509,7 +1515,7 @@ const learningSkillOrder = [
     8,  // Git
     7,  // MongoDB
     6,  // PostgreSQL
-];
+    ];
 
 
 /* ========================================
@@ -1763,6 +1769,7 @@ const showreelReducedMotion = window.matchMedia(
 ).matches;
 const showreelCompact = window.matchMedia("(max-width: 900px)").matches;
 const showreelNarrow = window.matchMedia("(max-width: 600px)").matches;
+const showreelDesktop = !showreelCompact;
 
 if (showreelSection && showreelVideo) {
     let showreelTicking = false;
@@ -1816,42 +1823,49 @@ if (showreelSection && showreelVideo) {
         }
     }
 
-    window.addEventListener("scroll", requestShowreelUpdate, {
-        passive: true,
-    });
-    window.addEventListener("resize", requestShowreelUpdate);
-    showreelVideo.addEventListener("loadedmetadata", requestShowreelUpdate);
+    if (showreelDesktop) {
+        window.addEventListener("scroll", requestShowreelUpdate, {
+            passive: true,
+        });
+        window.addEventListener("resize", requestShowreelUpdate);
+        showreelVideo.addEventListener("loadedmetadata", requestShowreelUpdate);
 
-    if (!showreelReducedMotion) {
-        const showreelObserver = new IntersectionObserver(
-            (entries) => {
-                const isVisible = entries[0].isIntersecting;
+        if (!showreelReducedMotion) {
+            const showreelObserver = new IntersectionObserver(
+                (entries) => {
+                    const isVisible = entries[0].isIntersecting;
 
-                if (isVisible) {
-                    showreelVideo.play().catch(() => {});
-                } else {
-                    showreelVideo.pause();
-                }
-            },
-            { threshold: 0.2 }
-        );
-        showreelObserver.observe(showreelSection);
+                    if (isVisible) {
+                        showreelVideo.play().catch(() => {});
+                    } else {
+                        showreelVideo.pause();
+                    }
+                },
+                { threshold: 0.2 }
+            );
+            showreelObserver.observe(showreelSection);
+        }
+
+        if (showreelReducedMotion) {
+            const showreelObserver = new IntersectionObserver(
+                (entries) => {
+                    if (entries[0].isIntersecting) {
+                        showreelVideo.play().catch(() => {});
+                        showreelObserver.disconnect();
+                    }
+                },
+                { threshold: 0.35 }
+            );
+            showreelObserver.observe(showreelSection);
+        }
+
+        updateShowreel();
+    } else {
+        showreelSection.style.setProperty("--showreel-progress", "0");
+        showreelSection.style.setProperty("--showreel-scale", "1");
+        if (showreelProgress) showreelProgress.textContent = "";
+        showreelVideo.play().catch(() => {});
     }
-
-    if (showreelReducedMotion) {
-        const showreelObserver = new IntersectionObserver(
-            (entries) => {
-                if (entries[0].isIntersecting) {
-                    showreelVideo.play().catch(() => {});
-                    showreelObserver.disconnect();
-                }
-            },
-            { threshold: 0.35 }
-        );
-        showreelObserver.observe(showreelSection);
-    }
-
-    updateShowreel();
 }
 
 const contactSection = document.querySelector(".contact-section");
